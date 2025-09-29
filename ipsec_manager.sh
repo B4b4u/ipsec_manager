@@ -121,15 +121,19 @@ fi
 ACTION="$1"
 VPN_NAME="$2"
 
-if [[ "$ACTION" == "start" ]]; then
-    NETWORK_DEVICE=$(ip route get 8.8.8.8 | awk --re-interval '{print $5; exit}')
-    if [[ -z "$NETWORK_DEVICE" ]]; then echo "ERROR: Could not determine the active network interface."; exit 1; fi
-fi
-
 case "$ACTION" in
     start)
         if [[ -z "$VPN_NAME" ]]; then echo "ERROR: The 'start' action requires a VPN name."; display_help; exit 1; fi
         if [[ -z "${VPN_ROUTES[$VPN_NAME]}" ]]; then echo "ERROR: VPN '$VPN_NAME' not found in the configuration file."; display_help; exit 1; fi
+
+        # Network device detection is now inside the 'start' case
+        NETWORK_DEVICE=$(ip route get 8.8.8.8 | awk --re-interval '{print $5; exit}')
+        if [[ -z "$NETWORK_DEVICE" ]]; then
+            echo "ERROR: Could not determine the active network interface."
+            exit 1
+        fi
+        echo "INFO: Network interface detected: $NETWORK_DEVICE"
+
         start_vpn
         ;;
     stop) stop_vpn ;;
